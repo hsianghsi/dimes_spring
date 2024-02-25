@@ -48,7 +48,7 @@ d3.json("https://raw.githubusercontent.com/hsianghsi/dimes/master/dimesA.json").
 
     // Create the simulation with adjusted parameters
     const simulation = d3.forceSimulation(nodes)
-        .force("charge", d3.forceManyBody().strength(-60)) // Global charge force
+        .force("charge", d3.forceManyBody().strength(d => (d.class === 'Owner' ? -60 : -10))) // Global charge force
         .force("center", d3.forceCenter(window.innerWidth / 2, window.innerHeight / 2))
         .alphaDecay(0.03) // Adjust alpha decay rate
         .force("collide", d3.forceCollide(8).iterations(4)); // Add forceCollide
@@ -58,7 +58,7 @@ d3.json("https://raw.githubusercontent.com/hsianghsi/dimes/master/dimesA.json").
         const forceLink = d3.forceLink(linksByClass[className])
             .id(d => d.name)
             .distance(70)
-            .strength(d => (d.source.class === className ? 1.6 : 0.8)); // Adjust strength based on class
+            .strength(d => (d.source.class === className ? 2 : 1)); // Adjust strength based on class
 
         simulation.force(`link-${className}`, forceLink);
     });
@@ -76,24 +76,24 @@ d3.json("https://raw.githubusercontent.com/hsianghsi/dimes/master/dimesA.json").
         .data(nodes)
         .enter().append("g");
 
-    // Append circles for "DBA"
-    node.filter(d => d.class !== 'Owner')
-        .append("circle")
-        .attr("r", 4)
-        .attr("fill", d => (d.class === 'A' ? "blue" : "black"));
+    // Append circles for "DBA" and "OwnerName"
+    node.append("circle")
+        .attr("r", d => (d.class === 'A' ? 4 : calculateOwnerRadius(d)))
+        .attr("fill", d => (d.class === 'A' ? "blue" : (d.class === 'Owner' ? "orange" : "black"))); // Adjust fill based on class
 
-    // Append squares for "OwnerName"
-    node.filter(d => d.class === 'Owner')
-        .append("circle")
-        .attr("r", 4)
-        .attr("fill", "orange");
-
-    // Add labels to nodes
+    // Add labels and connection counts to nodes
     const label = node.append("text")
         .text(d => d.name)
         .attr("font-size", 7)
         .attr("dx", d => (d.class === 'Owner' ? 6 : 12))
         .attr("dy", 4);
+
+    // Connection count for OwnerName nodes
+    const connectionCount = node.filter(d => d.class === 'Owner').append("text")
+        .text(d => `Count: ${calculateOwnerConnections(d)}`)
+        .attr("font-size", 7)
+        .attr("dx", 6)
+        .attr("dy", 16);
 
     // Update positions on tick
     simulation.on("tick", function() {
@@ -109,13 +109,34 @@ d3.json("https://raw.githubusercontent.com/hsianghsi/dimes/master/dimesA.json").
         label
             .attr("x", d => (d.class === 'Owner' ? 6 : 0))
             .attr("y", 0);
+
+        connectionCount
+            .text(d => `Count: ${calculateOwnerConnections(d)}`);
     });
+
+    // Function to calculate OwnerName node radius based on degree
+    function calculateOwnerRadius(ownerNode) {
+        const uniqueConnections = new Set(links.filter(link => link.target === ownerNode).map(link => link.source.name));
+        const connectionCount = uniqueConnections.size;
+        return Math.max(4, connectionCount); // Minimum radius of 4 to ensure visibility
+    }
+
+    // Function to calculate unique connections for OwnerName nodes
+    function calculateOwnerConnections(ownerNode) {
+        const uniqueConnections = new Set(links.filter(link => link.target === ownerNode).map(link => link.source.name));
+        return uniqueConnections.size;
+    }
 
     // Function to handle zoom
     function zoomed() {
         svg.attr("transform", d3.event.transform);
     }
 });
+
+
+
+
+
 
 
 
