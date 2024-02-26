@@ -1,5 +1,5 @@
 // Load data from the provided JSON file
-d3.json("https://raw.githubusercontent.com/hsianghsi/dimes/master/dimesA.json").then(function(data) {
+d3.json("https://raw.githubusercontent.com/hsianghsi/dimes/master/dimesA.json").then(function (data) {
 
     // Create an object to store nodes by name for easy lookup
     const nodeLookup = {};
@@ -12,7 +12,7 @@ d3.json("https://raw.githubusercontent.com/hsianghsi/dimes/master/dimesA.json").
     }).filter((node, index, self) => {
         // Filter out duplicates based on name
         return index === self.findIndex(n => n.name === node.name);
-    });
+    }).map(node => ({ ...node, fx: null, fy: null })); // Add initial null fixed coordinates
 
     // Store nodes in the lookup object
     nodes.forEach(node => {
@@ -48,16 +48,16 @@ d3.json("https://raw.githubusercontent.com/hsianghsi/dimes/master/dimesA.json").
 
     // Create the simulation with adjusted parameters
     const simulation = d3.forceSimulation(nodes)
-        .force("charge", d3.forceManyBody().strength(d => (d.class === 'Owner' ? -60 : -10))) // Global charge force
+        .force("charge", d3.forceManyBody().strength(d => (d.class === 'Owner' ? -90 : -40))) // Global charge force
         .force("center", d3.forceCenter(window.innerWidth / 2, window.innerHeight / 2))
-        .alphaDecay(0.03) // Adjust alpha decay rate
+        .alphaDecay(0.025) // Adjust alpha decay rate
         .force("collide", d3.forceCollide(8).iterations(4)); // Add forceCollide
 
     // Add separate link forces for each class
     Object.keys(linksByClass).forEach(className => {
         const forceLink = d3.forceLink(linksByClass[className])
             .id(d => d.name)
-            .distance(70)
+            .distance(90)
             .strength(d => (d.source.class === className ? 2 : 1)); // Adjust strength based on class
 
         simulation.force(`link-${className}`, forceLink);
@@ -74,26 +74,44 @@ d3.json("https://raw.githubusercontent.com/hsianghsi/dimes/master/dimesA.json").
     // Create nodes
     const node = svg.selectAll("g")
         .data(nodes)
-        .enter().append("g");
+        .enter().append("g")
 
-    // Append circles for "DBA" and "OwnerName"
-    node.append("circle")
-        .attr("r", d => (d.class === 'A' ? 4 : calculateOwnerRadius(d)))
-        .attr("fill", d => (d.class === 'A' ? "blue" : (d.class === 'Owner' ? "orange" : "black"))); // Adjust fill based on class
+    // Append circles for "OwnerName"
+    node.filter(d => d.class === 'Owner')
+    .append("circle")
+    .attr("r", d => (d.class === 'A' ? 3 : calculateOwnerRadius(d)))
+    .attr("fill", "orange")
+    .call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended));
+
+    // Append squares for "DBA"
+    node.filter(d => d.class !== 'Owner')
+    .append("rect")
+    .attr("width", 6)
+    .attr("height", 6)
+    .attr("x", -3)
+    .attr("y", -3)
+    .attr("fill", d => (d.class === 'A' ? "blue" : "black"))
+    .call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended));
 
     // Add labels and connection counts to nodes
     const label = node.append("text")
         .text(d => d.name)
         .attr("font-size", 7)
-        .attr("dx", d => (d.class === 'Owner' ? 6 : 12))
-        .attr("dy", 4);
+        .attr("dx", 6)
+        .attr("dy", 0);
 
     // Connection count for OwnerName nodes
-    const connectionCount = node.filter(d => d.class === 'Owner').append("text")
-        .text(d => `Count: ${calculateOwnerConnections(d)}`)
-        .attr("font-size", 7)
-        .attr("dx", 6)
-        .attr("dy", 16);
+    // const connectionCount = node.filter(d => d.class === 'Owner').append("text")
+        // .text(d => `Count: ${calculateOwnerConnections(d)}`)
+        // .attr("font-size", 7)
+        // .attr("dx", 6)
+        // .attr("dy", 16);
 
     // Update positions on tick
     simulation.on("tick", function() {
@@ -107,24 +125,42 @@ d3.json("https://raw.githubusercontent.com/hsianghsi/dimes/master/dimesA.json").
             .attr("transform", d => `translate(${d.x},${d.y})`);
 
         label
-            .attr("x", d => (d.class === 'Owner' ? 6 : 0))
-            .attr("y", 0);
+            .attr("x", d => (d.class === 'Owner' ? 4 : 0))
+            .attr("y", 3);
 
-        connectionCount
-            .text(d => `Count: ${calculateOwnerConnections(d)}`);
+        // connectionCount
+        //     .text(d => `Count: ${calculateOwnerConnections(d)}`);
     });
 
     // Function to calculate OwnerName node radius based on degree
     function calculateOwnerRadius(ownerNode) {
         const uniqueConnections = new Set(links.filter(link => link.target === ownerNode).map(link => link.source.name));
-        const connectionCount = uniqueConnections.size;
-        return Math.max(4, connectionCount); // Minimum radius of 4 to ensure visibility
+        const connectionCount = 2*uniqueConnections.size;
+        return Math.max(3, connectionCount); // Minimum radius of 3 to ensure visibility
     }
 
     // Function to calculate unique connections for OwnerName nodes
     function calculateOwnerConnections(ownerNode) {
         const uniqueConnections = new Set(links.filter(link => link.target === ownerNode).map(link => link.source.name));
         return uniqueConnections.size;
+    }
+
+    // Drag functions
+    function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.1).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+
+    function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+    }
+
+    function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
     }
 
     // Function to handle zoom
