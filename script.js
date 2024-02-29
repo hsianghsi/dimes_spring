@@ -50,7 +50,7 @@ d3.json("https://raw.githubusercontent.com/hsianghsi/dimes/master/dimesA.json").
     const simulation = d3.forceSimulation(nodes)
         .force("charge", d3.forceManyBody().strength(d => (d.class === 'Owner' ? -90 : -40))) // Global charge force
         .force("center", d3.forceCenter(window.innerWidth / 2, window.innerHeight / 2))
-        .alphaDecay(0.025) // Adjust alpha decay rate
+        .alphaDecay(0.0248) // Adjust alpha decay rate
         .force("collide", d3.forceCollide(8).iterations(4)); // Add forceCollide
 
     // Add separate link forces for each class
