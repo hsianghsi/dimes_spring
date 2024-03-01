@@ -80,7 +80,7 @@ d3.json("https://raw.githubusercontent.com/hsianghsi/dimes/master/dimesA.json").
     node.filter(d => d.class === 'Owner')
     .append("circle")
     .attr("r", d => (d.class === 'A' ? 3 : calculateOwnerRadius(d)))
-    .attr("fill", "orange")
+    .attr("fill", "rgb(255, 190, 90)")
     .call(d3.drag()
         .on("start", dragstarted)
         .on("drag", dragged)
