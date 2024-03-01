@@ -1,7 +1,8 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 400;
+    font-family: 'Courier New', Courier, monospace;
 }
 
 .heading {
@@ -20,7 +21,7 @@ body {
 
 #legend {
     position: absolute;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 11px;
     line-height: 50%;
     bottom: 10px;
@@ -35,7 +36,7 @@ body {
 
 #square-node {
     font-size: 14px;
-    color: blue;
+    color: rgb(232, 60, 60);
 }
 
 #other-square-node {

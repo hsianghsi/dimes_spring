@@ -93,7 +93,7 @@ d3.json("https://raw.githubusercontent.com/hsianghsi/dimes/master/dimesA.json").
     .attr("height", 6)
     .attr("x", -3)
     .attr("y", -3)
-    .attr("fill", d => (d.class === 'A' ? "blue" : "black"))
+    .attr("fill", d => (d.class === 'A' ? "rgb(232, 60, 60)" : "black"))
     .call(d3.drag()
         .on("start", dragstarted)
         .on("drag", dragged)
