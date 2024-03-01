@@ -68,7 +68,7 @@ d3.json("https://raw.githubusercontent.com/hsianghsi/dimes/master/dimesA.json").
         .data(links)
         .enter().append("line")
         .attr("stroke", "#999")
-        .attr("stroke-opacity", 0.6)
+        .attr("stroke-opacity", 0.5)
         .attr("stroke-width", 1);
 
     // Create nodes
@@ -93,7 +93,7 @@ d3.json("https://raw.githubusercontent.com/hsianghsi/dimes/master/dimesA.json").
     .attr("height", 6)
     .attr("x", -3)
     .attr("y", -3)
-    .attr("fill", d => (d.class === 'A' ? "rgb(232, 60, 60)" : "black"))
+    .attr("fill", d => (d.class === 'A' ? "rgb(232, 60, 60)" : "rgb(77, 77, 77)"))
     .call(d3.drag()
         .on("start", dragstarted)
         .on("drag", dragged)
